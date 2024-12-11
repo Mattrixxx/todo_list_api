@@ -3,25 +3,8 @@ const db = require("../models/db");
 
 exports.createProject = async (req, res, next) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      const error = new Error("Valodation failed");
-      error.status = 400;
-      error.details = errors.array();
-      throw error;
-    }
-
-    const { userId } = req.params;
     const { name } = req.body;
-    const tokenUserId = req.user.userId;
-
-    if (parseInt(userId) !== tokenUserId) {
-      const error = new Error(
-        "You are not authorized to access this resource."
-      );
-      error.status = 403;
-      throw error;
-    }
+    const userId = req.user.userId;
 
     const existingProject = await db.query(
       "SELECT * FROM projects WHERE user_id = $1 AND name = $2",
@@ -50,28 +33,16 @@ exports.createProject = async (req, res, next) => {
 
 exports.getAllProjectsByUserId = async (req, res, next) => {
   try {
-    const { userId } = req.params;
-    const tokenUserId = req.user.userId;
-
-    if (parseInt(userId) !== tokenUserId) {
-      const error = new Error(
-        "You are not authorized to access this resource."
-      );
-      error.status = 403;
-      throw error;
-    }
-
+    const userId = req.user.userId;
     const result = await db.query(
       "SELECT id, name FROM projects WHERE user_id = $1",
       [userId]
     );
 
-    res
-      .status(200)
-      .json({
-        message: "Projects retrieved successfully",
-        project: result.rows,
-      });
+    res.status(200).json({
+      message: "Projects retrieved successfully",
+      project: result.rows,
+    });
   } catch (error) {
     next(error);
   }
